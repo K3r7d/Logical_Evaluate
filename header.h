@@ -1,24 +1,19 @@
-#include<iostream>
-#include<stack>
-#include<queue>
-#include<vector>
-#include<math.h>
 #include<string>
 #include<sstream>
-#include<fstream>
-#include<map>
-#include<set>
+#include<vector>
+#include<iterator>
+#include<cmath>
+#include<iomanip>
+#include<stack>
+#include<iostream>
+#include<cstring>
 #include<algorithm>
-#include<utility>
-#include<cstdlib>
-
+#include<cstdlib>  
 using namespace std;
 
-string Arithmetic_InfixToPostfix(string infix);
-string Arithmetic_InfixToPrefix(string infix);
-string Arithmetic_PostfixPrefixCalculator(string input);
-string Logical_InfixToPostfix(string infix);
-string Logical_InfixToPrefix(string infix);
-string Logical_PostfixPrefixCalculator(string input);
-string PostfixtoInfix(string postfix);
-int precedence(char op);
+bool isOperator(char);
+bool performOperationforpre(bool,bool,bool);
+bool performOperationforpost(bool op1, bool op2, char op);
+double evaluatePostfix(const string& postfix);
+double evaluatePrefix(const string& prefix);
+bool isPrefixExpression(const string& expression);
