@@ -4,7 +4,27 @@
 //--------------------------------------------------------//
 // Arithmetic
 //--------------------------------------------------------//
-string Arithmetic_InfixToPostfix(string infix) {
+bool isOperator(char c) {
+    if (c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || c == '^') {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+int Precedence(char c) {
+    if (c == '^') {
+        return 3;
+    } else if (c == '*' || c == '/' || c == '%') {
+        return 2;
+    } else if (c == '+' || c == '-') {
+        return 1;
+    } else {
+        return -1;
+    }
+}
+
+std::string Arithmetic_InfixToPostfix(const std::string& infix) {
     std::stack<char> s;
     std::stringstream postfix;
 
@@ -12,12 +32,11 @@ string Arithmetic_InfixToPostfix(string infix) {
         if (infix[i] == ' ') {
             continue;
         } else if (std::isdigit(infix[i])) {
-            // If the character is a digit, it may be part of a multi-character number
             while (i < infix.size() && std::isdigit(infix[i])) {
                 postfix << infix[i];
                 i++;
             }
-            i--; // Move back one character to account for the increment in the loop
+            i--;
             postfix << ' ';
         } else if (infix[i] == '(') {
             s.push(infix[i]);
@@ -27,23 +46,14 @@ string Arithmetic_InfixToPostfix(string infix) {
                 postfix << ' ';
                 s.pop();
             }
-            s.pop();
-        } else if (infix[i] == '+' || infix[i] == '-') {
-            while (!s.empty() && s.top() != '(') {
-                postfix << s.top();
-                postfix << ' ';
+            if (!s.empty()) {
                 s.pop();
+            } else {
+                // Handle error: missing opening parenthesis
+                // You can throw an exception or return an error message here
             }
-            s.push(infix[i]);
-        } else if (infix[i] == '*' || infix[i] == '/' || infix[i] == '%') {
-            while (!s.empty() && (s.top() == '*' || s.top() == '/' || s.top() == '%')) {
-                postfix << s.top();
-                postfix << ' ';
-                s.pop();
-            }
-            s.push(infix[i]);
-        } else if (infix[i] == '^') {  // Handle exponentiation operator
-            while (!s.empty() && s.top() == '^') {
+        } else {
+            while (!s.empty() && s.top() != '(' && Precedence(s.top()) >= Precedence(infix[i])) {
                 postfix << s.top();
                 postfix << ' ';
                 s.pop();
@@ -64,33 +74,68 @@ string Arithmetic_InfixToPostfix(string infix) {
 }
 
 
+
 string Arithmetic_InfixToPrefix(string infix)
 {
-    // Reverse String and replace ( with ) and vice versa
-    // Get Postfix
-    // Reverse Postfix
-    int l = infix.size();
- 
-    // Reverse infix
-    reverse(infix.begin(), infix.end());
- 
-    // Replace ( with ) and vice versa
-    for (int i = 0; i < l; i++) {
- 
-        if (infix[i] == '(') {
-            infix[i] = ')';
-        }
-        else if (infix[i] == ')') {
-            infix[i] = '(';
+	std::stack<char> s;
+    std::stringstream prefix;
+
+    for (int i = infix.size() - 1; i >= 0; i--) {
+        if (infix[i] == ' ') {
+            continue;
+        } else if (std::isdigit(infix[i])) {
+            // If the character is a digit, it may be part of a multi-character number
+            while (i >= 0 && std::isdigit(infix[i])) {
+                prefix << infix[i];
+                i--;
+            }
+            i++; // Move forward one character to account for the decrement in the loop
+            prefix << ' ';
+        } else if (infix[i] == ')') {
+            s.push(infix[i]);
+        } else if (infix[i] == '(') {
+            while (!s.empty() && s.top() != ')') {
+                prefix << s.top();
+                prefix << ' ';
+                s.pop();
+            }
+            s.pop();
+        } else if (infix[i] == '+' || infix[i] == '-') {
+            while (!s.empty() && s.top() != ')' && Precedence(s.top()) > Precedence(infix[i])) {
+                prefix << s.top();
+                prefix << ' ';
+                s.pop();
+            }
+            s.push(infix[i]);
+        } else if (infix[i] == '*' || infix[i] == '/' || infix[i] == '%') {
+            while (!s.empty() && s.top() != ')' && Precedence(s.top()) > Precedence(infix[i])) {
+                prefix << s.top();
+                prefix << ' ';
+                s.pop();
+            }
+            s.push(infix[i]);
+        } else if (infix[i] == '^') {  // Handle exponentiation operator
+            while (!s.empty() && s.top() != ')' && Precedence(s.top()) > Precedence(infix[i])) {
+                prefix << s.top();
+                prefix << ' ';
+                s.pop();
+            }
+            s.push(infix[i]);
         }
     }
- 
-    string prefix = Arithmetic_InfixToPostfix(infix);
- 
-    reverse(prefix.begin(), prefix.end());
- 
-    return prefix;
+
+    while (!s.empty()) {
+        prefix << s.top();
+        prefix << ' ';
+        s.pop();
+    }
+
+    std::string result = prefix.str();
+    std::reverse(result.begin(), result.end());  // Reverse the generated prefix expression
+    result = result.substr(1);  // Remove the leading space
+    return result;
 }
+
 string PostfixtoInfix(string postfix){
     stack<string> s;
     string temp;
@@ -234,101 +279,62 @@ string PostfixPrefixCalculator(string expression)
 //--------------------------------------------------------//
 // Logic
 //--------------------------------------------------------//
-bool isOperator(char c) {
-    return (c == '&' || c == '|' || c == '-' || c == '<');
+bool isLogicOperator(string op){
+    return (op == "&" || op == "|" || op=="<->" || op == "~"||op == "->" || op == "!");
+}
+bool isOperand(char symbol) {
+    return (symbol == '&' || symbol == '|' || symbol == '<' || symbol == '-' || symbol == '~' || symbol == '!');
 }
 
-int getPrecedence(char c) {
-    if (c == '&') return 3;
-    if (c == '|') return 2;
-    if (c == '-') return 1;
-    if (c == '<') return 0;
+int getPrecedence(string op){
+    if (op == "~") return 3;
+    if (op == "&" || op == "|") return 2;
+    if (op == "<->") return 1;
+    if (op == "->") return 0;
     return -1;
 }
 
-std::string Infix2PostFix(const std::string& infix) {
-    std::stack<char> s;
+std::string LogicInfix2Postfix(const std::string& infix) {
+    std::stack<std::string> operatorStack;
     std::string postfix;
-    
-    for (size_t i = 0; i < infix.size(); i++) {
-        if (infix[i] == ' ') {
-            continue;
-        }
-        
-        if (isOperator(infix[i])) {
-            while (!s.empty() && s.top() != '(' && getPrecedence(s.top()) >= getPrecedence(infix[i])) {
-                postfix += s.top();
-                s.pop();
-            }
-            
-            s.push(infix[i]);
-        }
-        else if (infix[i] == '(') {
-            s.push(infix[i]);
-        }
-        else if (infix[i] == ')') {
-            while (!s.empty() && s.top() != '(') {
-                postfix += s.top();
-                s.pop();
-            }
-            
-            if (!s.empty()) {
-                s.pop(); // Discard the opening parenthesis
-            }
-        }
-        else {
-            postfix += infix[i];
-        }
-    }
-    
-    while (!s.empty()) {
-        postfix += s.top();
-        s.pop();
-    }
-    
-    return postfix;
-}
 
-std::string Infix2PreFix(const string & infix){
-    string prefix;
-    stack<char> s;
-    for (int i = infix.size()-1; i >=0; i--) {
-        if (infix[i] == ' ') {
-            continue;
-        }
-        
-        if (isOperator(infix[i])) {
-            while (!s.empty() && s.top() != ')' && getPrecedence(s.top()) > getPrecedence(infix[i])) {
-                prefix += s.top();
-                s.pop();
+    for (size_t i = 0; i < infix.length(); ++i) {
+        std::string token(1, infix[i]);
+
+        if (token == " ")
+            continue;  // Skip whitespace
+
+        if (token == "(") {
+            operatorStack.push(token);
+        } else if (token == ")") {
+            while (!operatorStack.empty() && operatorStack.top() != "(") {
+                postfix += operatorStack.top();
+                operatorStack.pop();
             }
-            
-            s.push(infix[i]);
-        }
-        else if (infix[i] == ')') {
-            s.push(infix[i]);
-        }
-        else if (infix[i] == '(') {
-            while (!s.empty() && s.top() != ')') {
-                prefix += s.top();
-                s.pop();
+
+            if (!operatorStack.empty() && operatorStack.top() == "(")
+                operatorStack.pop();  // Discard the opening parenthesis
+        } else if (!isLogicOperator(token)) {
+            // Operand
+            postfix += token;
+        } else {
+            // Operator
+            while (!operatorStack.empty() && isLogicOperator(operatorStack.top()) &&
+                   getPrecedence(operatorStack.top()) >= getPrecedence(token)) {
+                postfix += operatorStack.top();
+                operatorStack.pop();
             }
-            
-            if (!s.empty()) {
-                s.pop(); // Discard the opening parenthesis
-            }
-        }
-        else {
-            prefix += infix[i];
+            operatorStack.push(token);
         }
     }
-    
-    while (!s.empty()) {
-        prefix += s.top();
-        s.pop();
+
+    // Pop any remaining operators from the stack
+    while (!operatorStack.empty()) {
+        postfix += operatorStack.top();
+        operatorStack.pop();
     }
-    reverse(prefix.begin(),prefix.end());
-    return prefix;
+
+    return postfix;
 }
 
 bool performOperationforpre(bool op1, bool op2, char op) {
@@ -358,7 +364,7 @@ bool Logic_evaluatePostfix(const string& postfix) {
         if (postfix[i]=='1')value=true;
         if (postfix[i]=='0')value=false;
         if (postfix[i]=='~'){operands.top()=!operands.top();continue;}
-        if (isOperator(postfix[i])) {
+        if (isOperand(postfix[i])) {
             bool op2 = operands.top(); operands.pop();
             bool op1 = operands.top(); operands.pop();
             bool result = performOperationforpost(op1, op2, postfix[i]);
@@ -381,7 +387,7 @@ bool Logic_evaluatePrefix(const string& prefix) {
         if (prefix[i]=='1')value=true;
         if (prefix[i]=='0')value=false;
         if (prefix[i]=='~'){operands.top()=!operands.top();continue;}
-        if (isOperator(prefix[i])) {
+        if (isOperand(prefix[i])) {
             if (prefix[i]=='-')
             if (prefix[i-1])
             if (prefix[i-1]=='<')
@@ -401,7 +407,7 @@ bool Logic_evaluatePrefix(const string& prefix) {
 bool Logic_isPrefixExpression(const string& expression) {
     if (expression[0]=='~')
         return true;
-    return isOperator(expression[0]);
+    return isOperand(expression[0]);
 }
 string assignValue(string input, string value){
     string s="";
